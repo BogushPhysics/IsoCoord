@@ -14,6 +14,7 @@ class IsoCoordinateFinder:
     target_grid: NDArray
     grid_size: Tuple[int, int]
     n_points: int
+    _first_run: bool = True
 
     def __init__(self, mesh: Mesh, surface: CallableParametricSurface,
                  constraints: ConstraintSystem):
@@ -41,8 +42,11 @@ class IsoCoordinateFinder:
               verbose: bool = False):
 
         solver = LscmSolver(self.constraints, method, method_kwargs)
-        self.uv_mesh = solver.solve(self.uv_mesh)
+        if self._first_run:
+            self.uv_mesh = solver.solve(self.uv_mesh)
+            self._first_run = False
         self.__update_target_grid()
+        
 
         if verbose:
             from tqdm import tqdm
