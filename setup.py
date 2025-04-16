@@ -10,7 +10,7 @@ AUTHOR = "Igor Bogush"
 AUTHOR_EMAIL = "bogush94@gmail.com"
 URL = "https://github.com/BogushPhysics/IsoCoord"
 LICENSE = "MIT"
-PYTHON_VERSION = ">=3.8, <3.12"
+PYTHON_VERSION = ">=3.8, <3.14"
 
 INSTALL_REQUIRES = [
     "numpy",
