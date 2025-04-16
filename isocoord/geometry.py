@@ -85,15 +85,15 @@ class Geometry2D:
         self.diff_curvature = self.k1 - self.k2
 
 
-def Dx(array: NDArray[np.float_]) -> NDArray[np.float_]:
+def Dx(array: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.gradient(array, axis=1, edge_order=2)
 
 
-def Dy(array: NDArray[np.float_]) -> NDArray[np.float_]:
+def Dy(array: NDArray[np.float64]) -> NDArray[np.float64]:
     return np.gradient(array, axis=0, edge_order=2)
 
 
-def Dxx(array: NDArray[np.float_]) -> NDArray[np.float_]:
+def Dxx(array: NDArray[np.float64]) -> NDArray[np.float64]:
     result = array[:, 2:] - 2.0 * array[:, 1:-1] + array[:, :-2]
     result_left = 2.0 * array[:, 0] - 5.0 * \
         array[:, 1] + 4.0 * array[:, 2] - array[:, 3]
@@ -103,7 +103,7 @@ def Dxx(array: NDArray[np.float_]) -> NDArray[np.float_]:
     return result
 
 
-def Dyy(array: NDArray[np.float_]) -> NDArray[np.float_]:
+def Dyy(array: NDArray[np.float64]) -> NDArray[np.float64]:
     result = array[2:, :] - 2.0 * array[1:-1, :] + array[:-2, :]
     result_left = 2.0 * array[0, :] - 5.0 * \
         array[1, :] + 4.0 * array[2, :] - array[3, :]
@@ -113,5 +113,5 @@ def Dyy(array: NDArray[np.float_]) -> NDArray[np.float_]:
     return result
 
 
-def Dxy(array: NDArray[np.float_]) -> NDArray[np.float_]:
+def Dxy(array: NDArray[np.float64]) -> NDArray[np.float64]:
     return Dy(Dx(array))

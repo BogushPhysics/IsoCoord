@@ -22,7 +22,7 @@ class LscmSolver:
         self.constraint_matrix, self.rhs_vector = \
             self.__generate_constraint_matrix(constraints)
 
-    def solve(self, mesh: Mesh, initpoints: Optional[NDArray[np.float_]] = None) -> Mesh:
+    def solve(self, mesh: Mesh, initpoints: Optional[NDArray[np.float64]] = None) -> Mesh:
         points = mesh.xyz_flatten()
         triangulation = mesh.triangulation
 
@@ -108,7 +108,7 @@ class LscmSolver:
 
         return constraint_matrix, rhs_vector
 
-    def _triangle_to_complex_vector(self, points: NDArray[np.float_], triangulation: NDArray[np.int_]) -> Tuple[NDArray[np.complex_], NDArray[np.complex_]]:
+    def _triangle_to_complex_vector(self, points: NDArray[np.float64], triangulation: NDArray[np.int_]) -> Tuple[NDArray[np.complex128], NDArray[np.complex128]]:
         pp = points[triangulation.flatten()]
 
         p0 = pp[::3]
@@ -129,7 +129,7 @@ class LscmSolver:
 
         return z1, z2
 
-    def _prepare_quadratic_sqrt_form(self, points: NDArray[np.float_], triangulation: NDArray[np.int_]) -> sp.sparse.csr_matrix:
+    def _prepare_quadratic_sqrt_form(self, points: NDArray[np.float64], triangulation: NDArray[np.int_]) -> sp.sparse.csr_matrix:
 
         n_points = points.shape[0]
         n_triangles = triangulation.shape[0]

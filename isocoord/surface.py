@@ -4,8 +4,8 @@ from typing import Callable, Tuple, Optional, List, NamedTuple, Self, Union
 from scipy.spatial import Delaunay
 
 CallableParametricSurface = \
-    Callable[[NDArray[np.float_], NDArray[np.float_]],
-             Tuple[NDArray[np.float_], NDArray[np.float_], NDArray[np.float_]]]
+    Callable[[NDArray[np.float64], NDArray[np.float64]],
+             Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]]
 
 
 class Mesh:
@@ -34,8 +34,8 @@ class Mesh:
         _type_: _description_
     """
     size: Tuple[int, int]  # (nx, ny)
-    xi_array: NDArray[np.float_]
-    xyz_array: NDArray[np.float_]
+    xi_array: NDArray[np.float64]
+    xyz_array: NDArray[np.float64]
     triangulation: NDArray[np.int_]
     num_points: int
     num_triangles: int
@@ -80,19 +80,19 @@ class Mesh:
     def refine(self) -> Self:  # TODO
         raise NotImplementedError
 
-    def xyz_flatten(self) -> NDArray[np.float_]:
+    def xyz_flatten(self) -> NDArray[np.float64]:
         return self.xyz_array.reshape(-1, self.xyz_array.shape[-1])
 
-    def xi_flatten(self) -> NDArray[np.float_]:
+    def xi_flatten(self) -> NDArray[np.float64]:
         return self.xi_array.reshape(-1, self.xi_array.shape[-1])
 
     @staticmethod
-    def unflatten(array: NDArray[np.float_], size: Tuple[int, int], dimensionality: int) -> NDArray:
+    def unflatten(array: NDArray[np.float64], size: Tuple[int, int], dimensionality: int) -> NDArray:
         return array.reshape((size[1], size[0], dimensionality))
 
 
 def generate_mesh(surface: CallableParametricSurface,
-                  boundaries: Tuple[Tuple[np.float_, np.float_], Tuple[np.float_, np.float_]],
+                  boundaries: Tuple[Tuple[np.float64, np.float64], Tuple[np.float64, np.float64]],
                   size: Tuple[np.int_, np.int_],
                   triangulizer: Optional[Union[Callable, str]] = None) -> Mesh:
 
