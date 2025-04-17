@@ -83,10 +83,10 @@ class IsoCoordinateFinder:
         U = self.uv_mesh.xi_array[:, :, 0]
         V = self.uv_mesh.xi_array[:, :, 1]
 
-        U_min = np.min(U)
-        U_max = np.max(U)
-        V_min = np.min(V)
-        V_max = np.max(V)
+        U_min = 0.5 * (U[0,0] + U[-1,0])
+        U_max = 0.5 * (U[0,-1] + U[-1,-1])
+        V_min = 0.5 * (V[0,0] + V[0,-1])
+        V_max = 0.5 * (V[-1,0] + V[-1,-1])
 
         U_target = np.linspace(U_min, U_max, nx)
         V_target = np.linspace(V_min, V_max, ny)
