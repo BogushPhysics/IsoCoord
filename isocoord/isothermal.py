@@ -2,7 +2,7 @@ from typing import Dict, Tuple
 from numpy.typing import NDArray
 import numpy as np
 from .surface import CallableParametricSurface, Mesh
-from .constraints import ConstraintSystem
+from .constraints import ConstraintSystem, ConstraintType
 from .lscm import LscmSolver
 
 
@@ -47,7 +47,6 @@ class IsoCoordinateFinder:
             self._first_run = False
         self.__update_target_grid()
         
-
         if verbose:
             from tqdm import tqdm
             progress = tqdm(total=max_iter, desc="Progress", unit="it")
@@ -117,22 +116,40 @@ class IsoCoordinateFinder:
         dXidV = dXi2 / dV
         dEtadV = dEta2 / dV
 
-        dXidV[0, :] = 0
-        dXidU[0, :] = 0
-        dEtadV[0, :] = 0
-        dEtadU[0, :] = 0
-        dXidV[-1, :] = 0
-        dXidU[-1, :] = 0
-        dEtadV[-1, :] = 0
-        dEtadU[-1, :] = 0
-        dXidV[:, 0] = 0
-        dXidU[:, 0] = 0
-        dEtadV[:, 0] = 0
-        dEtadU[:, 0] = 0
-        dXidV[:, -1] = 0
-        dXidU[:, -1] = 0
-        dEtadV[:, -1] = 0
-        dEtadU[:, -1] = 0
+        if self.constraints.constraint_type in {ConstraintType.FIXED_RECTANGLE, ConstraintType.FLEXIBLE_RECTANGLE}:
+            dXidV[0, :] = 0
+            dXidU[0, :] = 0
+            dEtadV[0, :] = 0
+            dEtadU[0, :] = 0
+            dXidV[-1, :] = 0
+            dXidU[-1, :] = 0
+            dEtadV[-1, :] = 0
+            dEtadU[-1, :] = 0
+            dXidV[:, 0] = 0
+            dXidU[:, 0] = 0
+            dEtadV[:, 0] = 0
+            dEtadU[:, 0] = 0
+            dXidV[:, -1] = 0
+            dXidU[:, -1] = 0
+            dEtadV[:, -1] = 0
+            dEtadU[:, -1] = 0
+        else:
+            dXidV[0, 0] = 0
+            dXidU[0, 0] = 0
+            dEtadV[0, 0] = 0
+            dEtadU[0, 0] = 0
+            dXidV[-1, 0] = 0
+            dXidU[-1, 0] = 0
+            dEtadV[-1, 0] = 0
+            dEtadU[-1, 0] = 0
+            dXidV[0, -1] = 0
+            dXidU[0, -1] = 0
+            dEtadV[0, -1] = 0
+            dEtadU[0, -1] = 0
+            dXidV[-1, -1] = 0
+            dXidU[-1, -1] = 0
+            dEtadV[-1, -1] = 0
+            dEtadU[-1, -1] = 0
 
         Xi_new = Xi + alpha * ((U_target - U) * dXidU + (V_target - V) * dXidV)
         Eta_new = Eta + alpha * \
