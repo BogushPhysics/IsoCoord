@@ -1,6 +1,7 @@
 from typing import NamedTuple, List
 import numpy as np
 from .surface import Mesh
+from enum import Enum
 
 # each ConstraintElement is (point, coordiante, coefficient)
 # each constraint is List[ConstraintElement], rhs
@@ -49,17 +50,28 @@ class Constraint(NamedTuple):
         )
 
 
+class ConstraintType(Enum):
+    GENERAL = "general"
+    TWO_POINT = "2point"
+    FIXED_CORNER = "fixed_corner"
+    FLEXIBLE_CORNER = "flexible_corner"
+    FIXED_RECTANGLE = "fixed_rectangle"
+    FLEXIBLE_RECTANGLE = "flexible_rectangle"
+
+
 class ConstraintSystem:
     constraints: List[Constraint]
     total_points: int
     total_triangles: int
     total_constraints: int
+    constraint_type: ConstraintType
 
-    def __init__(self, constraints: List[Constraint], total_points: int, total_triangles: int):
+    def __init__(self, constraints: List[Constraint], total_points: int, total_triangles: int, constraint_type: ConstraintType = ConstraintType.GENERAL):
         self.constraints = constraints
         self.total_points = total_points
         self.total_triangles = total_triangles
         self.total_constraints = len(constraints)
+        self.constraint_type = constraint_type
 
 
 def generate_2point_constraint(mesh: Mesh, points: List[int],
@@ -70,7 +82,7 @@ def generate_2point_constraint(mesh: Mesh, points: List[int],
         Constraint._singleElement(points[1], 0, coordinates[1][0]),
         Constraint._singleElement(points[1], 1, coordinates[1][1])
     ]
-    return ConstraintSystem(_constraints, mesh.num_points, mesh.num_triangles)
+    return ConstraintSystem(_constraints, mesh.num_points, mesh.num_triangles, constraint_type=ConstraintType.TWO_POINT)
 
 
 def generate_fixed_corner_constraint(mesh: Mesh, ratio: float) -> ConstraintSystem:
@@ -89,7 +101,7 @@ def generate_fixed_corner_constraint(mesh: Mesh, ratio: float) -> ConstraintSyst
         Constraint._singleElement(tl, 0, 0),
         Constraint._singleElement(tl, 1, ratio)
     ]
-    return ConstraintSystem(_constraints, mesh.num_points, mesh.num_triangles)
+    return ConstraintSystem(_constraints, mesh.num_points, mesh.num_triangles, constraint_type=ConstraintType.FIXED_CORNER)
 
 
 def generate_flexible_corner_constraint(mesh: Mesh) -> ConstraintSystem:
@@ -107,7 +119,7 @@ def generate_flexible_corner_constraint(mesh: Mesh) -> ConstraintSystem:
         Constraint._singleElement(tr, 0, 1.0),
         Constraint._diffOneElement(tr, tl, 1)
     ]
-    return ConstraintSystem(_constraints, mesh.num_points, mesh.num_triangles)
+    return ConstraintSystem(_constraints, mesh.num_points, mesh.num_triangles, constraint_type=ConstraintType.FLEXIBLE_CORNER)
 
 
 def generate_fixed_rectangle_constraint(mesh: Mesh, ratio: float) -> ConstraintSystem:
@@ -135,7 +147,7 @@ def generate_fixed_rectangle_constraint(mesh: Mesh, ratio: float) -> ConstraintS
 
     _constraints = con_b_0 + con_b_1 + con_t_0 + \
         con_t_1 + con_l_0 + con_l_1 + con_r_0 + con_r_1
-    return ConstraintSystem(_constraints, mesh.num_points, mesh.num_triangles)
+    return ConstraintSystem(_constraints, mesh.num_points, mesh.num_triangles, constraint_type=ConstraintType.FIXED_RECTANGLE)
 
 
 def generate_flexible_rectangle_constraint(mesh: Mesh) -> ConstraintSystem:
@@ -164,4 +176,4 @@ def generate_flexible_rectangle_constraint(mesh: Mesh) -> ConstraintSystem:
 
     _constraints = con_b_0 + con_b_1 + con_t_0 + \
         con_t_1 + con_l_0 + con_l_1 + con_r_0 + con_r_1
-    return ConstraintSystem(_constraints, mesh.num_points, mesh.num_triangles)
+    return ConstraintSystem(_constraints, mesh.num_points, mesh.num_triangles, constraint_type=ConstraintType.FLEXIBLE_RECTANGLE)
