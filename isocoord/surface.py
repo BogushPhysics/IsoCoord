@@ -1,7 +1,6 @@
 import numpy as np
 from numpy.typing import NDArray
-from typing import Callable, Tuple, Optional, List, NamedTuple, Self, Union
-from scipy.spatial import Delaunay
+from typing import Callable, Tuple, Optional, List, Self, Union
 
 CallableParametricSurface = \
     Callable[[NDArray[np.float64], NDArray[np.float64]],
@@ -110,8 +109,8 @@ def generate_mesh(surface: CallableParametricSurface,
 
     points = np.column_stack((x.ravel(), y.ravel(), z.ravel()))
     triangulation = None
-    if triangulizer is None or triangulizer == 'delaunay':
-        triangulation = Delaunay(points[:, :2]).simplices
+    if triangulizer is None:
+        triangulation = generate_triangulation(n_xi, n_eta)
     elif callable(triangulizer):
         triangulation = triangulizer(points)
 
@@ -119,3 +118,42 @@ def generate_mesh(surface: CallableParametricSurface,
         raise ValueError
 
     return Mesh(xi_grid, xyz_grid, triangulation)
+
+def generate_triangulation(nx: int, ny: int) -> NDArray[np.int_]:
+    """
+    Generate a triangulation for a rectangular grid of points.
+    The triangulation is done by connecting the points in a checkerboard pattern with random diagonals.
+    The direction of the diagonal is defined by a random integer 0 or 1 as follows:
+    # 0:
+    #  __
+    # |\ |
+    # |_\|
+    # 
+    # 1:
+    #  __
+    # | /|
+    # |/_|
+    """
+    indices = np.array(range(nx*ny)).reshape((ny, nx))
+    direction = np.random.randint(0, 2, size=(ny-1, nx-1))
+    vertex1 = indices[:-1, :-1]
+    vertex2 = indices[1:, :-1]
+    vertex3 = indices[:-1, 1:] * direction + (1 - direction) * indices[1:, 1:]
+
+    vertex4 = indices[:-1, 1:]
+    vertex5 = indices[1:, 1:]
+    vertex6 = indices[1:, :-1] * direction + (1 - direction) * indices[:-1, :-1]
+
+    vertex1 = vertex1.flatten()
+    vertex2 = vertex2.flatten()
+    vertex3 = vertex3.flatten()
+    vertex4 = vertex4.flatten()
+    vertex5 = vertex5.flatten()
+    vertex6 = vertex6.flatten()
+
+    triangles1 = np.stack((vertex1, vertex3, vertex2), axis=-1)
+    triangles2 = np.stack((vertex4, vertex5, vertex6), axis=-1) # preserve the orientation of the triangle
+    triangles = np.empty((triangles1.shape[0] + triangles2.shape[0], 3), dtype=triangles1.dtype)
+    triangles[0::2] = triangles1
+    triangles[1::2] = triangles2
+    return triangles
