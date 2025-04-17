@@ -1,8 +1,9 @@
 from typing import Dict, Tuple
 from numpy.typing import NDArray
 import numpy as np
-from .surface import CallableParametricSurface, Mesh
+from .surface import CallableParametricSurface, Mesh, generate_triangulation
 from .constraints import ConstraintSystem, ConstraintType
+from . import constraints as ic
 from .lscm import LscmSolver
 
 
@@ -64,6 +65,72 @@ class IsoCoordinateFinder:
 
             if error <= tol:
                 break
+
+    def refine(self, nx_new: int, ny_new: int) -> None:
+        """
+        Refine the mesh to have (nx_new, ny_new) grid.
+        """
+        # interpolate meshes
+        uv_array = self.uv_mesh.xi_array
+        xi_array = self.xyz_mesh.xi_array
+        xyz_array = self.xyz_mesh.xyz_array
+        uv_array_new = np.stack([self.__refine_array(uv_array[:, :, i], nx=nx_new, ny=ny_new) for i in range(2)], axis=-1)
+        xi_array_new = np.stack([self.__refine_array(xi_array[:, :, i], nx=nx_new, ny=ny_new) for i in range(2)], axis=-1)
+        xyz_array_new = np.stack([self.__refine_array(xyz_array[:, :, i], nx=nx_new, ny=ny_new) for i in range(3)], axis=-1)
+        triangulation = generate_triangulation(nx_new, ny_new)
+        xyz_mesh_new = Mesh(xi_array_new.copy(), xyz_array_new.copy(), triangulation.copy())
+        uv_mesh_new = Mesh(uv_array_new.copy(), xyz_array_new.copy(), triangulation.copy())
+
+        # create new constraints
+        if self.constraints.constraint_type == ConstraintType.FIXED_RECTANGLE:
+            ratio = self.__get_constraint_ratio()
+            cs_new = ic.generate_fixed_rectangle_constraint(xyz_mesh_new, ratio)
+        elif self.constraints.constraint_type == ConstraintType.FLEXIBLE_RECTANGLE:
+            cs_new = ic.generate_flexible_rectangle_constraint(xyz_mesh_new)
+        elif self.constraints.constraint_type == ConstraintType.FIXED_CORNER:
+            ratio = self.__get_constraint_ratio()
+            cs_new = ic.generate_fixed_corner_constraint(xyz_mesh_new, ratio)
+        elif self.constraints.constraint_type == ConstraintType.FLEXIBLE_CORNER:
+            cs_new = ic.generate_flexible_corner_constraint(xyz_mesh_new)
+        else:
+            raise ValueError("General and 2-point constraints are not supported for refinement.")
+
+        # update fields
+        self.xyz_mesh = xyz_mesh_new
+        self.uv_mesh = uv_mesh_new
+        self.constraints = cs_new
+        self.grid_size = self.xyz_mesh.size
+        self.n_points = self.grid_size[0] * self.grid_size[1]
+
+    def __refine_array(self, array, nx, ny):
+            from scipy.interpolate import RectBivariateSpline
+            a, b = array.shape
+            x = np.linspace(0, 1, b)
+            y = np.linspace(0, 1, a)
+            interpolator = RectBivariateSpline(y, x, array)
+            x_new = np.linspace(0, 1, nx)
+            y_new = np.linspace(0, 1, ny)
+            return interpolator(y_new, x_new)
+    
+    def __get_constraint_ratio(self) -> float:
+        if self.constraints.constraint_type not in {ConstraintType.FIXED_RECTANGLE, ConstraintType.FIXED_CORNER}:
+            raise ValueError("Ratio can be found for constraints of the type fixed rectangle or fixed corner.")
+        
+        ratio = 0
+        for eq in self.constraints.constraints:
+            if len(eq.elements) != 1:
+                continue
+            element = eq.elements[0]
+            if element.idx != 1:
+                continue
+            y = eq.rhs / element.coef
+            if y > ratio:
+                ratio = y
+        
+        if ratio <= 0:
+            raise ValueError("Ratio not found in constraints.")
+        
+        return ratio
 
     def __error(self):
 
